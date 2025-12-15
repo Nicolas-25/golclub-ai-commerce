@@ -1,14 +1,17 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { ChatHeader } from '@/components/chat/ChatHeader'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { TypingIndicator } from '@/components/chat/TypingIndicator'
-import { Send } from 'lucide-react'
+import { Send, Maximize2, Minimize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Header } from '@/components/layout/Header'
+import { PromoBanner } from '@/components/layout/PromoBanner'
+import { ProductCatalog } from '@/components/catalog/ProductCatalog'
+import { AuthModal } from '@/components/auth/AuthModal'
+import { TypingIndicator } from '@/components/chat/TypingIndicator'
 import { cn } from '@/lib/utils'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 interface ChatMessage {
   id: string
@@ -27,32 +30,29 @@ function generateSessionId(): string {
   return `session-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 }
 
-// Detect if message contains a name (simple heuristic)
+// Detect if message contains a name
 function extractName(message: string, previousAssistantMessage: string): string | null {
-  const lowerPrev = previousAssistantMessage.toLowerCase()
+  const namePatterns = [
+    /(?:me chamo|meu nome é|sou o|sou a|pode me chamar de)\s+([A-ZÀ-Ú][a-zà-ú]+)/i,
+    /^([A-ZÀ-Ú][a-zà-ú]+)$/,
+  ]
 
-  // Check if AI asked for name
-  if (lowerPrev.includes('como posso te chamar') ||
-    lowerPrev.includes('qual seu nome') ||
-    lowerPrev.includes('qual o seu nome') ||
-    lowerPrev.includes('me chamo') ||
-    lowerPrev.includes('seu nome')) {
+  const askingForName = previousAssistantMessage.toLowerCase().includes('como posso te chamar') ||
+    previousAssistantMessage.toLowerCase().includes('qual seu nome') ||
+    previousAssistantMessage.toLowerCase().includes('qual o seu nome')
 
-    // Extract first word as name (common pattern)
-    const words = message.trim().split(/\s+/)
-    const firstWord = words[0]
-
-    // Check if it looks like a name (starts with capital, reasonable length)
-    if (firstWord &&
-      firstWord.length >= 2 &&
-      firstWord.length <= 20 &&
-      /^[A-ZÀ-Ú][a-zà-ú]+$/.test(firstWord)) {
-      return firstWord
+  if (askingForName && message.trim().split(' ').length <= 3) {
+    const words = message.trim().split(' ')
+    const possibleName = words[0]
+    if (possibleName && possibleName.length > 1 && /^[A-ZÀ-Ú]/i.test(possibleName)) {
+      return possibleName.charAt(0).toUpperCase() + possibleName.slice(1).toLowerCase()
     }
+  }
 
-    // If message is short, likely just the name
-    if (message.trim().length <= 30 && !message.includes(' ') || words.length <= 2) {
-      return message.trim().split(' ')[0]
+  for (const pattern of namePatterns) {
+    const match = message.match(pattern)
+    if (match && match[1]) {
+      return match[1]
     }
   }
 
@@ -61,52 +61,69 @@ function extractName(message: string, previousAssistantMessage: string): string 
 
 // Detect WhatsApp number
 function extractWhatsApp(message: string, previousAssistantMessage: string): string | null {
-  const lowerPrev = previousAssistantMessage.toLowerCase()
+  const phonePattern = /(?:\+?55\s?)?(?:\(?\d{2}\)?[\s-]?)?\d{4,5}[\s-]?\d{4}/
+  const askingForPhone = previousAssistantMessage.toLowerCase().includes('whatsapp') ||
+    previousAssistantMessage.toLowerCase().includes('telefone') ||
+    previousAssistantMessage.toLowerCase().includes('celular')
 
-  if (lowerPrev.includes('whatsapp') || lowerPrev.includes('telefone') || lowerPrev.includes('celular')) {
-    // Look for phone number patterns
-    const phoneMatch = message.match(/\d{10,11}/)
-    if (phoneMatch) return phoneMatch[0]
-
-    // Try with formatting
-    const formattedMatch = message.match(/\(?\d{2}\)?\s*\d{4,5}[-\s]?\d{4}/)
-    if (formattedMatch) {
-      return formattedMatch[0].replace(/\D/g, '')
+  if (askingForPhone) {
+    const match = message.match(phonePattern)
+    if (match) {
+      return match[0].replace(/\D/g, '')
     }
   }
 
   return null
 }
 
-export default function HomePage() {
+// Detect team interest
+function extractTeamInterest(message: string): string | null {
+  const teams = ['flamengo', 'corinthians', 'palmeiras', 'são paulo', 'santos', 'grêmio',
+    'internacional', 'cruzeiro', 'atlético', 'botafogo', 'fluminense', 'vasco']
+  const lowerMessage = message.toLowerCase()
+
+  for (const team of teams) {
+    if (lowerMessage.includes(team)) {
+      return team.charAt(0).toUpperCase() + team.slice(1)
+    }
+  }
+
+  return null
+}
+
+export default function Home() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
-      id: 'welcome',
+      id: '1',
       role: 'assistant',
-      content: 'Olá! 👋 Bem-vindo à GolClub!\n\nSou seu assistente virtual e estou aqui para te ajudar a encontrar a camisa perfeita do seu time do coração. ⚽\n\nQual time você torce?',
+      content: 'Olá! 👋 Seja bem-vindo à **GolClub**! Sou sua assistente de vendas e vou te ajudar a encontrar a camisa perfeita do seu time do coração. ⚽\n\nPara começar, **qual time você torce?** Ou se preferir, me conta o que você está procurando!'
     }
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [leadInfo, setLeadInfo] = useState<LeadInfo>({})
   const [sessionId] = useState(() => generateSessionId())
+  const [leadInfo, setLeadInfo] = useState<LeadInfo>({})
+  const [showCatalog, setShowCatalog] = useState(false)
+  const [catalogTeamFilter, setCatalogTeamFilter] = useState('')
+  const [authModalOpen, setAuthModalOpen] = useState(false)
+  const [authModalType, setAuthModalType] = useState<'login' | 'register'>('login')
+  const [user, setUser] = useState<{ email: string; name?: string } | null>(null)
 
-  const bottomRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, isLoading])
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages])
 
-  // Save lead to backend
-  const saveLead = useCallback(async (updates: Partial<LeadInfo>) => {
+  const saveLead = useCallback(async (data: Partial<LeadInfo>) => {
     try {
       await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...updates,
+          ...data,
           session_id: sessionId,
         }),
       })
@@ -115,63 +132,47 @@ export default function HomePage() {
     }
   }, [sessionId])
 
-  // Auto-resize textarea
-  const handleInput = () => {
-    const textarea = textareaRef.current
-    if (textarea) {
-      textarea.style.height = 'auto'
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`
-    }
-  }
-
   const sendMessage = useCallback(async (content: string) => {
     if (!content.trim() || isLoading) return
 
     const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
+      id: Date.now().toString(),
       role: 'user',
       content: content.trim(),
     }
 
-    // Get last assistant message for context
-    const lastAssistantMsg = [...messages].reverse().find(m => m.role === 'assistant')?.content || ''
+    const lastAssistantMsg = messages.filter(m => m.role === 'assistant').pop()?.content || ''
 
-    // Try to extract lead info
+    // Extract lead info
     const extractedName = extractName(content, lastAssistantMsg)
     const extractedWhatsApp = extractWhatsApp(content, lastAssistantMsg)
-
-    let updatedLeadInfo = { ...leadInfo }
+    const extractedTeam = extractTeamInterest(content)
 
     if (extractedName && !leadInfo.name) {
-      updatedLeadInfo.name = extractedName
-      setLeadInfo(updatedLeadInfo)
+      const newLeadInfo = { ...leadInfo, name: extractedName }
+      setLeadInfo(newLeadInfo)
       saveLead({ name: extractedName })
     }
 
     if (extractedWhatsApp && !leadInfo.whatsapp) {
-      updatedLeadInfo.whatsapp = extractedWhatsApp
-      setLeadInfo(updatedLeadInfo)
+      const newLeadInfo = { ...leadInfo, whatsapp: extractedWhatsApp }
+      setLeadInfo(newLeadInfo)
       saveLead({ whatsapp: extractedWhatsApp })
     }
 
-    // Extract team interest from keywords
-    const teams = ['flamengo', 'corinthians', 'palmeiras', 'são paulo', 'santos', 'vasco', 'fluminense', 'botafogo', 'grêmio', 'internacional', 'cruzeiro', 'atlético', 'real madrid', 'barcelona']
-    const lowerContent = content.toLowerCase()
-    const mentionedTeam = teams.find(t => lowerContent.includes(t))
-
-    if (mentionedTeam && !leadInfo.team_interest) {
-      updatedLeadInfo.team_interest = mentionedTeam
-      setLeadInfo(updatedLeadInfo)
-      saveLead({ team_interest: mentionedTeam })
+    if (extractedTeam && !leadInfo.team_interest) {
+      const newLeadInfo = { ...leadInfo, team_interest: extractedTeam }
+      setLeadInfo(newLeadInfo)
+      saveLead({ team_interest: extractedTeam })
+      setCatalogTeamFilter(extractedTeam)
     }
 
     setMessages(prev => [...prev, userMessage])
     setInput('')
     setIsLoading(true)
 
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
+    const assistantId = (Date.now() + 1).toString()
+    setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '' }])
 
     try {
       const response = await fetch('/api/chat', {
@@ -182,160 +183,233 @@ export default function HomePage() {
             role: m.role,
             content: m.content,
           })),
-          leadInfo: updatedLeadInfo,
         }),
       })
 
-      if (!response.ok) throw new Error('Failed')
+      if (!response.ok) throw new Error('Failed to send message')
 
       const reader = response.body?.getReader()
+      if (!reader) throw new Error('No reader available')
+
       const decoder = new TextDecoder()
-
       let assistantContent = ''
-      const assistantId = `assistant-${Date.now()}`
 
-      setMessages(prev => [...prev, {
-        id: assistantId,
-        role: 'assistant',
-        content: '',
-      }])
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        assistantContent += chunk
 
-          const chunk = decoder.decode(value, { stream: true })
-          assistantContent += chunk
-
-          setMessages(prev => prev.map(m =>
-            m.id === assistantId ? { ...m, content: assistantContent } : m
-          ))
+        // Check if AI wants to show catalog
+        if (assistantContent.includes('[MOSTRAR_CATALOGO]') ||
+          assistantContent.includes('ver mais opções') ||
+          assistantContent.includes('ver todas as camisas')) {
+          setShowCatalog(true)
         }
+
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === assistantId
+              ? { ...m, content: assistantContent.replace('[MOSTRAR_CATALOGO]', '') }
+              : m
+          )
+        )
       }
     } catch (error) {
       console.error('Error:', error)
-      setMessages(prev => [...prev, {
-        id: `error-${Date.now()}`,
-        role: 'assistant',
-        content: 'Desculpe, ocorreu um erro. Tente novamente.',
-      }])
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantId
+            ? { ...m, content: 'Desculpe, tive um problema. Pode repetir?' }
+            : m
+        )
+      )
     } finally {
       setIsLoading(false)
     }
   }, [messages, isLoading, leadInfo, saveLead])
 
-  const onSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     sendMessage(input)
   }
 
+  const handleProductSelect = (product: any) => {
+    setShowCatalog(false)
+    sendMessage(`Quero saber mais sobre a camisa ${product.name} do ${product.team}`)
+  }
+
+  const showAuthModal = (type: 'login' | 'register') => {
+    setAuthModalType(type)
+    setAuthModalOpen(true)
+  }
+
+  const handleAuthSuccess = (userData: { email: string; name?: string }) => {
+    setUser(userData)
+    setAuthModalOpen(false)
+    if (userData.name) {
+      setLeadInfo(prev => ({ ...prev, name: userData.name }))
+    }
+  }
+
   return (
-    <main className="min-h-screen">
-      <div className="flex flex-col h-[100dvh] bg-background">
-        <ChatHeader />
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <Header
+        onProductsClick={() => setShowCatalog(!showCatalog)}
+        showAuthModal={showAuthModal}
+      />
 
-        {/* Lead indicator */}
-        {leadInfo.name && (
-          <div className="px-4 py-1.5 bg-primary/10 text-xs text-primary text-center border-b border-border">
-            👤 {leadInfo.name} {leadInfo.whatsapp && `• 📱 ${leadInfo.whatsapp}`}
-          </div>
-        )}
+      {/* Promo Banner */}
+      <PromoBanner />
 
-        {/* Messages */}
-        <ScrollArea className="flex-1 px-0">
-          <div className="flex flex-col gap-4 py-4">
-            {messages.map((msg) => {
-              const isUser = msg.role === 'user'
+      {/* Main Content */}
+      <main className="flex-1 flex overflow-hidden">
+        <AnimatePresence mode="wait">
+          {/* Chat Area */}
+          <motion.div
+            layout
+            className={cn(
+              'flex flex-col transition-all duration-300',
+              showCatalog ? 'w-full md:w-2/5 border-r border-border' : 'w-full'
+            )}
+          >
+            {/* Lead indicator */}
+            {(leadInfo.name || leadInfo.whatsapp) && (
+              <div className="bg-primary/10 px-4 py-2 text-sm border-b border-border">
+                <span className="text-primary font-medium">
+                  {leadInfo.name && `👤 ${leadInfo.name}`}
+                  {leadInfo.name && leadInfo.whatsapp && ' • '}
+                  {leadInfo.whatsapp && `📱 ${leadInfo.whatsapp}`}
+                  {leadInfo.team_interest && ` • ⚽ ${leadInfo.team_interest}`}
+                </span>
+              </div>
+            )}
 
-              return (
-                <motion.div
-                  key={msg.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className={cn(
-                    'flex gap-3 px-4',
-                    isUser ? 'justify-end' : 'justify-start'
-                  )}
-                >
-                  {!isUser && (
-                    <Avatar className="h-8 w-8 shrink-0 bg-primary">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-                        GC
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-
-                  <div className={cn('max-w-[85%] space-y-2', isUser ? 'items-end' : 'items-start')}>
-                    {msg.content && (
-                      <div className={cn(
-                        'rounded-2xl px-4 py-2.5 text-sm',
-                        isUser
-                          ? 'bg-primary text-primary-foreground rounded-br-md'
-                          : 'bg-card text-card-foreground rounded-bl-md border border-border'
-                      )}>
-                        <p className="whitespace-pre-wrap">{msg.content}</p>
-                      </div>
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+              <div className="max-w-3xl mx-auto space-y-4">
+                {messages.map((message) => (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={cn(
+                      'flex gap-3',
+                      message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                     )}
-                  </div>
-
-                  {isUser && (
-                    <Avatar className="h-8 w-8 shrink-0 bg-secondary">
-                      <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
-                        EU
+                  >
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarFallback className={cn(
+                        message.role === 'user' ? 'bg-secondary' : 'bg-primary text-primary-foreground'
+                      )}>
+                        {message.role === 'user' ? '👤' : '⚽'}
                       </AvatarFallback>
                     </Avatar>
-                  )}
-                </motion.div>
-              )
-            })}
-
-            {isLoading && <TypingIndicator />}
-
-            <div ref={bottomRef} />
-          </div>
-        </ScrollArea>
-
-        {/* Input */}
-        <div className="sticky bottom-0 bg-background/80 backdrop-blur-lg border-t border-border px-4 py-3 safe-bottom">
-          <form onSubmit={onSubmit} className="flex items-end gap-2 max-w-3xl mx-auto">
-            <div className="flex-1 relative">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onInput={handleInput}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    sendMessage(input)
-                  }
-                }}
-                placeholder="Digite sua mensagem..."
-                disabled={isLoading}
-                rows={1}
-                className={cn(
-                  "w-full resize-none rounded-2xl bg-card border border-border",
-                  "px-4 py-3 text-sm placeholder:text-muted-foreground",
-                  "focus:outline-none focus:ring-2 focus:ring-primary/50",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                  "scrollbar-thin"
+                    <div className={cn(
+                      'max-w-[85%] rounded-2xl px-4 py-2.5',
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground rounded-br-md'
+                        : 'bg-secondary rounded-bl-md'
+                    )}>
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    </div>
+                  </motion.div>
+                ))}
+                {isLoading && messages[messages.length - 1]?.content === '' && (
+                  <div className="flex gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground">⚽</AvatarFallback>
+                    </Avatar>
+                    <div className="bg-secondary rounded-2xl rounded-bl-md px-4 py-3">
+                      <TypingIndicator />
+                    </div>
+                  </div>
                 )}
-              />
+              </div>
+            </ScrollArea>
+
+            {/* Input */}
+            <div className="p-4 border-t border-border bg-background/50 backdrop-blur-sm">
+              <form onSubmit={handleSubmit} className="max-w-3xl mx-auto flex gap-3">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder={user ? `Olá ${user.name || 'visitante'}, como posso ajudar?` : 'Digite sua mensagem...'}
+                  className="flex-1 bg-secondary rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  disabled={isLoading}
+                />
+                <Button
+                  type="submit"
+                  size="icon"
+                  disabled={!input.trim() || isLoading}
+                  className="h-12 w-12 rounded-xl"
+                >
+                  <Send className="h-5 w-5" />
+                </Button>
+              </form>
+
+              {/* Quick actions for guests */}
+              {!user && (
+                <div className="max-w-3xl mx-auto mt-3 flex gap-2 justify-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => showAuthModal('register')}
+                    className="text-xs"
+                  >
+                    Cadastrar e ganhar 10% OFF
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => showAuthModal('login')}
+                    className="text-xs"
+                  >
+                    Já tenho conta
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <Button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              size="icon"
-              className="h-11 w-11 rounded-full bg-primary hover:bg-primary/90 shrink-0"
+            {/* Toggle catalog on mobile */}
+            {!showCatalog && (
+              <button
+                onClick={() => setShowCatalog(true)}
+                className="md:hidden fixed bottom-24 right-4 bg-primary text-primary-foreground p-3 rounded-full shadow-lg"
+              >
+                <Maximize2 className="h-5 w-5" />
+              </button>
+            )}
+          </motion.div>
+
+          {/* Catalog Panel */}
+          {showCatalog && (
+            <motion.div
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 100 }}
+              className="w-full md:w-3/5 fixed md:relative inset-0 md:inset-auto z-40 bg-background"
             >
-              <Send className="h-5 w-5" />
-            </Button>
-          </form>
-        </div>
-      </div>
-    </main>
+              <ProductCatalog
+                onClose={() => setShowCatalog(false)}
+                onSelectProduct={handleProductSelect}
+                teamFilter={catalogTeamFilter}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialType={authModalType}
+        onSuccess={handleAuthSuccess}
+      />
+    </div>
   )
 }
