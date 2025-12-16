@@ -35,7 +35,7 @@ export default async function PedidosPage() {
         .order('created_at', { ascending: false })
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+        <div className="min-h-screen bg-white">
             <Header user={user} />
 
             {/* Chat Sidebar */}
@@ -47,7 +47,7 @@ export default async function PedidosPage() {
             <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pr-[420px]">
                 <div className="flex items-center gap-3 mb-8">
                     <Package className="h-8 w-8 text-primary" />
-                    <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">Meus Pedidos</h1>
+                    <h1 className="text-3xl font-bold text-zinc-900">Meus Pedidos</h1>
                 </div>
 
                 <div className="space-y-6">
@@ -57,7 +57,7 @@ export default async function PedidosPage() {
                             const StatusIcon = status.icon
 
                             return (
-                                <div key={order.id} className="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+                                <div key={order.id} className="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
                                     {/* Order Header */}
                                     <div className="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 flex flex-wrap items-center justify-between gap-4">
                                         <div className="space-y-1">

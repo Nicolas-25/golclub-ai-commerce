@@ -33,7 +33,7 @@ export default async function LancamentosPage() {
     const favoriteIds = new Set(favorites?.map((f: any) => f.product_id))
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+        <div className="min-h-screen bg-white">
             <Header user={user} />
 
             {/* Chat Sidebar */}
@@ -47,7 +47,7 @@ export default async function LancamentosPage() {
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <Sparkles className="h-6 w-6 text-primary" />
-                            <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">Lançamentos</h1>
+                            <h1 className="text-3xl font-bold text-zinc-900">Lançamentos</h1>
                         </div>
                         <p className="text-zinc-500">As novidades mais quentes da temporada.</p>
                     </div>
@@ -68,9 +68,9 @@ export default async function LancamentosPage() {
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                    <div className="text-center py-20 bg-zinc-50 rounded-2xl border border-zinc-100">
                         <Sparkles className="h-12 w-12 text-zinc-300 mx-auto mb-3" />
-                        <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100">Nenhum lançamento no momento</h3>
+                        <h3 className="text-lg font-medium text-zinc-900">Nenhum lançamento no momento</h3>
                         <p className="text-zinc-500 max-w-sm mx-auto mt-2">Fique ligado! Em breve teremos novas camisas exclusivas para você.</p>
                     </div>
                 )}

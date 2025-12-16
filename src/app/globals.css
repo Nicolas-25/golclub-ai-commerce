@@ -46,7 +46,7 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-/* GolClub Brand Colors - Dark Theme */
+/* GolClub Brand Colors - Light Theme (White Background) */
 :root {
   --radius: 0.75rem;
 
@@ -55,44 +55,44 @@
   --brand-purple-light: #8B5CF6;
   --brand-purple-dark: #6D28D9;
 
-  /* Dark Theme (Default) */
-  --background: #09090B;
-  --foreground: #FAFAFA;
-  --card: #18181B;
-  --card-foreground: #FAFAFA;
-  --popover: #18181B;
-  --popover-foreground: #FAFAFA;
+  /* Light Theme (White Background) */
+  --background: #FFFFFF;
+  --foreground: #18181B;
+  --card: #FFFFFF;
+  --card-foreground: #18181B;
+  --popover: #FFFFFF;
+  --popover-foreground: #18181B;
   --primary: #7C3AED;
   --primary-foreground: #FFFFFF;
-  --secondary: #27272A;
-  --secondary-foreground: #FAFAFA;
-  --muted: #27272A;
-  --muted-foreground: #A1A1AA;
+  --secondary: #F4F4F5;
+  --secondary-foreground: #18181B;
+  --muted: #F4F4F5;
+  --muted-foreground: #71717A;
   --accent: #7C3AED;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: #27272A;
-  --input: #27272A;
+  --border: #E4E4E7;
+  --input: #E4E4E7;
   --ring: #7C3AED;
   --chart-1: #7C3AED;
   --chart-2: #8B5CF6;
   --chart-3: #A78BFA;
   --chart-4: #C4B5FD;
   --chart-5: #DDD6FE;
-  --sidebar: #18181B;
-  --sidebar-foreground: #FAFAFA;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #18181B;
   --sidebar-primary: #7C3AED;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #27272A;
-  --sidebar-accent-foreground: #FAFAFA;
-  --sidebar-border: #27272A;
+  --sidebar-accent: #F4F4F5;
+  --sidebar-accent-foreground: #18181B;
+  --sidebar-border: #E4E4E7;
   --sidebar-ring: #7C3AED;
 
   /* Chat specific */
-  --chat-bg: #09090B;
+  --chat-bg: #FFFFFF;
   --chat-bubble-user: #7C3AED;
-  --chat-bubble-assistant: #18181B;
-  --chat-input-bg: #18181B;
+  --chat-bubble-assistant: #F4F4F5;
+  --chat-input-bg: #F4F4F5;
 }
 
 .dark {

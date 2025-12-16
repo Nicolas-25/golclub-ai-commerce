@@ -31,7 +31,7 @@ export default async function CamisasPage() {
     const favoriteIds = new Set(favorites?.map((f: any) => f.product_id))
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+        <div className="min-h-screen bg-white">
             <Header user={user} />
 
             {/* Chat Sidebar */}
@@ -43,10 +43,10 @@ export default async function CamisasPage() {
             <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pr-[420px]">
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">Todas as Camisas</h1>
+                        <h1 className="text-3xl font-bold text-zinc-900">Todas as Camisas</h1>
                         <p className="text-zinc-500 mt-1">Explore nossa coleção completa de mantos.</p>
                     </div>
-                    <span className="text-sm font-medium px-3 py-1 bg-zinc-100 dark:bg-zinc-800 rounded-full">
+                    <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full">
                         {products?.length || 0} produtos
                     </span>
                 </div>
