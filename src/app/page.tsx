@@ -8,10 +8,13 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Header } from '@/components/layout/Header'
 import { AuthModal } from '@/components/auth/AuthModal'
 import { GuestHome } from '@/components/home/GuestHome'
+import { BannerCarousel } from '@/components/home/BannerCarousel'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
 import { createBrowserClient } from '@supabase/ssr'
+import ReactMarkdown from 'react-markdown'
+import { useChatContext } from '@/contexts/ChatContext'
 
 interface ChatMessage {
   id: string
@@ -33,6 +36,7 @@ export default function Home() {
   const [user, setUser] = useState<User | null>(null)
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  const { selectedProduct, clearSelectedProduct } = useChatContext()
 
   // Check for existing session
   useEffect(() => {
@@ -93,6 +97,10 @@ export default function Home() {
             role: m.role,
             content: m.content,
           })),
+          userInfo: user ? {
+            name: user.name,
+            email: user.email,
+          } : null,
         }),
       })
 
@@ -131,7 +139,16 @@ export default function Home() {
     } finally {
       setIsLoading(false)
     }
-  }, [messages, isLoading])
+  }, [messages, isLoading, user])
+
+  // Handle product selected from catalog
+  useEffect(() => {
+    if (selectedProduct && user) {
+      const productMessage = `Quero saber mais sobre a camisa ${selectedProduct.name} do ${selectedProduct.team}!`
+      sendMessage(productMessage)
+      clearSelectedProduct()
+    }
+  }, [selectedProduct, user, clearSelectedProduct, sendMessage])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -188,10 +205,8 @@ export default function Home() {
                 but for now let's focus on the chat box as requested.
             */}
 
-            {/* Banner Placeholder (Optional - keeping consistent layout) */}
-            <div className="bg-primary rounded-xl h-24 flex items-center justify-center shadow-lg mb-2">
-              <h2 className="text-white text-2xl font-bold tracking-wide">BANNERS</h2>
-            </div>
+            {/* Banner Carousel */}
+            <BannerCarousel />
 
             {/* Chat Box Container */}
             <div className="bg-primary rounded-2xl shadow-xl flex flex-col h-[600px] overflow-hidden relative">
@@ -220,12 +235,19 @@ export default function Home() {
                         </div>
                       )}
                       <div className={cn(
-                        'max-w-[80%] rounded-2xl px-5 py-4 shadow-sm',
+                        'max-w-[80%] rounded-2xl px-5 py-4 shadow-sm prose prose-sm max-w-none',
                         message.role === 'user'
                           ? 'bg-white text-zinc-900 rounded-tr-sm'
                           : 'bg-white text-zinc-900 rounded-tl-sm'
                       )}>
-                        <p className="text-sm whitespace-pre-wrap leading-relaxed font-medium">{message.content}</p>
+                        <ReactMarkdown
+                          components={{
+                            p: ({ children }) => <p className="m-0 text-sm whitespace-pre-wrap leading-relaxed font-medium">{children}</p>,
+                            strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                          }}
+                        >
+                          {message.content}
+                        </ReactMarkdown>
                       </div>
                     </motion.div>
                   ))}

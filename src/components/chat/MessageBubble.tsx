@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { CheckoutForm } from '@/components/checkout/CheckoutForm'
+import ReactMarkdown from 'react-markdown'
+
 interface MessageBubbleProps {
     message: any
     isLatest?: boolean
@@ -37,15 +39,25 @@ export function MessageBubble({ message, isLatest }: MessageBubbleProps) {
                 'max-w-[85%] space-y-2',
                 isUser ? 'items-end' : 'items-start'
             )}>
-                {/* Text content */}
-                <div className={cn(
-                    'rounded-2xl px-4 py-2.5 text-sm',
-                    isUser
-                        ? 'bg-primary text-primary-foreground rounded-br-md'
-                        : 'bg-card text-card-foreground rounded-bl-md border border-border'
-                )}>
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                </div>
+                {/* Text content with Markdown */}
+                {message.content && (
+                    <div className={cn(
+                        'rounded-2xl px-4 py-2.5 text-sm prose prose-sm max-w-none',
+                        isUser
+                            ? 'bg-primary text-primary-foreground rounded-br-md prose-invert'
+                            : 'bg-card text-card-foreground rounded-bl-md border border-border'
+                    )}>
+                        <ReactMarkdown
+                            components={{
+                                p: ({ children }) => <p className="m-0 whitespace-pre-wrap">{children}</p>,
+                                strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                em: ({ children }) => <em className="italic">{children}</em>,
+                            }}
+                        >
+                            {message.content}
+                        </ReactMarkdown>
+                    </div>
+                )}
 
                 {/* Generative UI Component (Legacy/Stored) */}
                 {message.ui_component && (

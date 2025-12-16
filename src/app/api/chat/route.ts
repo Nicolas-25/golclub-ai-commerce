@@ -29,14 +29,21 @@ async function getProductsContext(): Promise<string> {
 
 export async function POST(req: Request) {
     try {
-        const { messages, leadInfo } = await req.json()
+        const { messages, leadInfo, userInfo } = await req.json()
 
         const productsContext = await getProductsContext()
 
-        // Build lead context
-        let leadContext = ''
-        if (leadInfo?.name) {
-            leadContext = `\n\nINFORMAÇÕES DO CLIENTE:
+        // Build user context from logged in session
+        let userContext = ''
+        if (userInfo?.name || userInfo?.email) {
+            userContext = `\n\nUSUÁRIO LOGADO (JÁ TEMOS ESSES DADOS - NÃO PEÇA NOVAMENTE):
+- Nome: ${userInfo.name || 'Não informado'}
+- Email: ${userInfo.email || 'Não informado'}
+- WhatsApp: ${userInfo.whatsapp || 'Não informado'}
+IMPORTANTE: O cliente JÁ ESTÁ CADASTRADO. Use o nome dele naturalmente mas NÃO peça nome, email ou WhatsApp novamente!`
+        } else if (leadInfo?.name) {
+            // Fallback for non-logged users (leads)
+            userContext = `\n\nINFORMAÇÕES DO LEAD:
 - Nome: ${leadInfo.name}
 ${leadInfo.whatsapp ? `- WhatsApp: ${leadInfo.whatsapp}` : '- WhatsApp: Ainda não informado'}
 ${leadInfo.team_interest ? `- Time de interesse: ${leadInfo.team_interest}` : ''}`
@@ -52,35 +59,22 @@ PERSONALIDADE:
 
 CATÁLOGO DISPONÍVEL:
 ${productsContext}
-${leadContext}
+${userContext}
 
 REGRAS DE VENDA:
 - Destaque "PRONTA ENTREGA" quando disponível
 - Preços em Reais (R$)
 - Se não tivermos o produto, ofereça encomendar
 
-ESTRATÉGIA DE PAGAMENTO (IMPORTANTE):
+ESTRATÉGIA DE PAGAMENTO:
 - Priorize o PIX: Ofereça 5% de desconto extra e aprovação na hora.
-  ex: "No Pix eu consigo te dar 5% de desconto e aprova na hora! Fica só R$ X. Pode ser?"
-- Se o cliente pedir Débito, explique: "Aceitamos débito, mas o processamento pode demorar validações extras. O Pix é instantâneo e funciona como débito direto. Prefere o Pix?"
 - Para CARTÃO DE CRÉDITO: Diga que aceitamos e é super seguro.
 
-QUANDO O CLIENTE CONFIRM COMPRAR:
+QUANDO O CLIENTE CONFIRMAR COMPRA:
 1. NÃO envie links de pagamento no texto.
 2. CHAME A FERRAMENTA 'requestCheckout' com o nome do produto e o preço.
-3. Isso vai abrir a janela de pagamento segura para o cliente.
 
-CAPTURA DE LEADS (MUITO IMPORTANTE):
-
-CAPTURA DE LEADS (MUITO IMPORTANTE):
-1. Depois de mostrar um produto, pergunte o nome do cliente de forma natural
-   - Use frases como: "A propósito, como posso te chamar?" ou "Qual seu nome?"
-2. Após saber o nome, USE O NOME para personalizar a conversa
-3. Quando o cliente decidir comprar, peça o WhatsApp
-   - Use: "Me passa seu WhatsApp que te envio o link de pagamento! 📱"
-4. Se o cliente já deu o nome, não pergunte novamente
-
-${leadInfo?.name ? `O cliente já se apresentou como ${leadInfo.name}. Use o nome dele na conversa!` : 'Você ainda não sabe o nome do cliente. Pergunte naturalmente após mostrar um produto.'}
+${userInfo?.name ? `LEMBRE-SE: O cliente se chama ${userInfo.name}. Use o nome dele na conversa de forma natural!` : 'Para visitantes não logados: pergunte o nome naturalmente após mostrar um produto.'}
 
 Responda de forma natural e amigável!`
 

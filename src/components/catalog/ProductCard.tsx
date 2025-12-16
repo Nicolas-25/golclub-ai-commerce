@@ -1,11 +1,12 @@
 'use client'
 
 import Image from 'next/image'
-import { Heart } from 'lucide-react'
+import { Heart, MessageCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { useChatContext } from '@/contexts/ChatContext'
 
 interface Product {
     id: string
@@ -34,6 +35,19 @@ export function ProductCard({
 }: ProductCardProps) {
     const [isFavorite, setIsFavorite] = useState(initialIsFavorite)
     const [isLoading, setIsLoading] = useState(false)
+    const { selectProduct } = useChatContext()
+
+    const handleChatWithProduct = () => {
+        selectProduct({
+            id: product.id,
+            name: product.name,
+            team: product.team,
+            price_sale: product.price,
+            image_url: product.image_url,
+        })
+        // Scroll to top where chat is
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
 
     // Sync state if initial changes (e.g. parent re-fetch)
     useEffect(() => {
@@ -121,10 +135,15 @@ export function ProductCard({
                 </p>
             </div>
 
-            {/* Quick Add Overlay (Optional, consistent with premium feel) */}
+            {/* Chat Overlay */}
             <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-white/90 via-white/90 to-transparent dark:from-black/90 dark:via-black/90">
-                <Button className="w-full font-bold shadow-lg" size="sm">
-                    VER DETALHES
+                <Button
+                    className="w-full font-bold shadow-lg"
+                    size="sm"
+                    onClick={handleChatWithProduct}
+                >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    QUERO ESSA!
                 </Button>
             </div>
         </div>
