@@ -1,6 +1,7 @@
 import { createGroq } from '@ai-sdk/groq'
-import { streamText } from 'ai'
+import { streamText, tool } from 'ai'
 import { createClient } from '@/lib/supabase/server'
+import { z } from 'zod'
 
 const groq = createGroq({
     apiKey: process.env.GROQ_API_KEY,
@@ -54,10 +55,22 @@ ${productsContext}
 ${leadContext}
 
 REGRAS DE VENDA:
-- Só mencione produtos do catálogo acima
 - Destaque "PRONTA ENTREGA" quando disponível
 - Preços em Reais (R$)
 - Se não tivermos o produto, ofereça encomendar
+
+ESTRATÉGIA DE PAGAMENTO (IMPORTANTE):
+- Priorize o PIX: Ofereça 5% de desconto extra e aprovação na hora.
+  ex: "No Pix eu consigo te dar 5% de desconto e aprova na hora! Fica só R$ X. Pode ser?"
+- Se o cliente pedir Débito, explique: "Aceitamos débito, mas o processamento pode demorar validações extras. O Pix é instantâneo e funciona como débito direto. Prefere o Pix?"
+- Para CARTÃO DE CRÉDITO: Diga que aceitamos e é super seguro.
+
+QUANDO O CLIENTE CONFIRM COMPRAR:
+1. NÃO envie links de pagamento no texto.
+2. CHAME A FERRAMENTA 'requestCheckout' com o nome do produto e o preço.
+3. Isso vai abrir a janela de pagamento segura para o cliente.
+
+CAPTURA DE LEADS (MUITO IMPORTANTE):
 
 CAPTURA DE LEADS (MUITO IMPORTANTE):
 1. Depois de mostrar um produto, pergunte o nome do cliente de forma natural
@@ -75,6 +88,21 @@ Responda de forma natural e amigável!`
             model: groq('llama-3.3-70b-versatile'),
             system: systemPrompt,
             messages,
+            tools: {
+                requestCheckout: tool({
+                    description: 'Aciona o fluxo de checkout seguro quando o cliente decide comprar um produto.',
+                    parameters: z.object({
+                        productName: z.string().describe('Nome do produto que será comprado'),
+                        price: z.number().describe('Preço original do produto (sem desconto do pix)'),
+                    }),
+                    execute: async (args: any) => {
+                        return {
+                            ...args,
+                            status: 'ready_for_payment'
+                        }
+                    }
+                } as any)
+            }
         })
 
         return result.toTextStreamResponse()

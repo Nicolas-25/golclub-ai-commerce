@@ -4,16 +4,16 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ProductCard } from '@/components/ui/ProductCard'
-import type { Message } from '@/types/database'
-
+import { CheckoutForm } from '@/components/checkout/CheckoutForm'
 interface MessageBubbleProps {
-    message: Message
+    message: any
     isLatest?: boolean
 }
 
-export function MessageBubble({ message, isLatest }: MessageBubbleProps) {
+export function MessageBubble({ message, isLatest }: { message: Message | any, isLatest?: boolean }) {
     const isUser = message.role === 'user'
     const isAssistant = message.role === 'assistant'
+    const checkoutTool = message.toolInvocations?.find((t: any) => t.toolName === 'requestCheckout')
 
     return (
         <motion.div
@@ -47,9 +47,19 @@ export function MessageBubble({ message, isLatest }: MessageBubbleProps) {
                     <p className="whitespace-pre-wrap">{message.content}</p>
                 </div>
 
-                {/* Generative UI Component */}
+                {/* Generative UI Component (Legacy/Stored) */}
                 {message.ui_component && (
                     <GenerativeUI component={message.ui_component} />
+                )}
+
+                {/* Live Tool Components */}
+                {checkoutTool && (
+                    <div className="mt-2 w-full max-w-sm">
+                        <CheckoutForm
+                            productName={checkoutTool.args.productName}
+                            amount={checkoutTool.args.price}
+                        />
+                    </div>
                 )}
             </div>
 

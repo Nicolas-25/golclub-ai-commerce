@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 
 interface HeaderProps {
     showAuthModal?: (type: 'login' | 'register') => void
-    user?: { email: string; name?: string } | null
+    user?: any
     onLogout?: () => void
 }
 
@@ -83,7 +83,7 @@ export function Header({ showAuthModal, user, onLogout }: HeaderProps) {
                                         />
                                         <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border-2 border-primary py-2 z-50">
                                             <div className="px-4 py-2 border-b border-zinc-200">
-                                                <p className="font-bold text-sm">{user.name || 'Usuário'}</p>
+                                                <p className="font-bold text-sm">{user.name || user.user_metadata?.name || 'Usuário'}</p>
                                                 <p className="text-xs text-zinc-500">{user.email}</p>
                                             </div>
                                             <Link
