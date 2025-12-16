@@ -42,7 +42,7 @@ export default async function LancamentosPage() {
                 userName={user.user_metadata?.name}
             />
 
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 mr-16">
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pr-[420px]">
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <div className="flex items-center gap-2 mb-1">

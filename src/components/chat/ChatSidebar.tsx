@@ -130,10 +130,10 @@ export function ChatSidebar({ userEmail, userName }: ChatSidebarProps) {
     return (
         <AnimatePresence>
             <motion.div
-                initial={{ width: isExpanded ? 400 : 60 }}
-                animate={{ width: isExpanded ? 400 : 60 }}
+                initial={{ width: isExpanded ? 380 : 56 }}
+                animate={{ width: isExpanded ? 380 : 56 }}
                 transition={{ duration: 0.3 }}
-                className="fixed right-0 top-0 h-screen bg-primary shadow-2xl z-40 flex flex-col overflow-hidden"
+                className="fixed right-4 top-20 bottom-4 bg-primary rounded-2xl shadow-2xl z-40 flex flex-col overflow-hidden"
             >
                 {/* Toggle Button */}
                 <button

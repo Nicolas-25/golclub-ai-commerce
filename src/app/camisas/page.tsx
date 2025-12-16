@@ -40,7 +40,7 @@ export default async function CamisasPage() {
                 userName={user.user_metadata?.name}
             />
 
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 mr-16">
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 pr-[420px]">
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">Todas as Camisas</h1>
