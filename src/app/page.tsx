@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Header } from '@/components/layout/Header'
-import { PromoBanner } from '@/components/layout/PromoBanner'
 import { AuthModal } from '@/components/auth/AuthModal'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 import { cn } from '@/lib/utils'
@@ -165,7 +164,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
       <Header
         showAuthModal={showAuthModal}
@@ -173,72 +172,94 @@ export default function Home() {
         onLogout={handleLogout}
       />
 
-      {/* Promo Banner */}
-      <PromoBanner />
+      {/* Banner Area */}
+      <div className="bg-primary py-6">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-center text-white font-bold text-xl mb-2">BANNERS</h2>
+        </div>
+      </div>
 
       {/* Main Chat Area - Purple background like mockup */}
       <main className="flex-1 flex flex-col bg-primary">
-        {/* Messages */}
-        <ScrollArea className="flex-1 p-4 md:p-6" ref={scrollRef}>
-          <div className="max-w-4xl mx-auto space-y-4">
-            {messages.map((message) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={cn(
-                  'flex gap-3',
-                  message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+        {/* Chat Container */}
+        <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
+          <div className="bg-primary rounded-2xl border-4 border-white/20 p-4 h-full flex flex-col min-h-[400px]">
+            {/* Messages */}
+            <ScrollArea className="flex-1 pr-2" ref={scrollRef}>
+              <div className="space-y-4">
+                {messages.map((message) => (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={cn(
+                      'flex gap-3',
+                      message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                    )}
+                  >
+                    {message.role === 'assistant' && (
+                      <Avatar className="h-10 w-10 shrink-0 border-2 border-white bg-white/20">
+                        <AvatarFallback className="bg-transparent text-white text-lg">
+                          👤
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    {message.role === 'user' && (
+                      <Avatar className="h-10 w-10 shrink-0 border-2 border-white bg-white">
+                        <AvatarFallback className="bg-white text-primary text-lg">
+                          👤
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className={cn(
+                      'max-w-[85%] rounded-xl px-4 py-3 border-2',
+                      message.role === 'user'
+                        ? 'bg-white text-zinc-900 border-white'
+                        : 'bg-white text-zinc-900 border-white'
+                    )}>
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                    </div>
+                  </motion.div>
+                ))}
+                {isLoading && messages[messages.length - 1]?.content === '' && (
+                  <div className="flex gap-3">
+                    <Avatar className="h-10 w-10 border-2 border-white bg-white/20">
+                      <AvatarFallback className="bg-transparent text-white text-lg">👤</AvatarFallback>
+                    </Avatar>
+                    <div className="bg-white rounded-xl px-4 py-3 border-2 border-white">
+                      <TypingIndicator />
+                    </div>
+                  </div>
                 )}
-              >
-                <Avatar className="h-10 w-10 shrink-0 border-2 border-white/20">
-                  <AvatarFallback className="bg-white/20 text-white">
-                    {message.role === 'user' ? '👤' : '⚽'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-3',
-                  message.role === 'user'
-                    ? 'bg-white text-zinc-900 rounded-br-md'
-                    : 'bg-white/10 backdrop-blur-sm text-white rounded-bl-md border border-white/20'
-                )}>
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                </div>
-              </motion.div>
-            ))}
-            {isLoading && messages[messages.length - 1]?.content === '' && (
-              <div className="flex gap-3">
-                <Avatar className="h-10 w-10 border-2 border-white/20">
-                  <AvatarFallback className="bg-white/20 text-white">⚽</AvatarFallback>
-                </Avatar>
-                <div className="bg-white/10 backdrop-blur-sm rounded-2xl rounded-bl-md px-4 py-3 border border-white/20">
-                  <TypingIndicator />
-                </div>
               </div>
-            )}
+            </ScrollArea>
           </div>
-        </ScrollArea>
+        </div>
 
-        {/* Input Area */}
-        <div className="p-4 md:p-6 bg-primary/80 backdrop-blur-sm border-t border-white/10">
-          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex gap-3">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Digite sua mensagem..."
-              className="flex-1 bg-white rounded-full px-5 py-3 text-sm text-zinc-900 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/50"
-              disabled={isLoading}
-            />
-            <Button
-              type="submit"
-              size="icon"
-              disabled={!input.trim() || isLoading}
-              className="h-12 w-12 rounded-full bg-white hover:bg-white/90 text-primary"
-            >
-              <Send className="h-5 w-5" />
-            </Button>
-          </form>
+        {/* Input Area - Fixed at bottom */}
+        <div className="bg-primary py-4 border-t-4 border-white/20">
+          <div className="max-w-4xl mx-auto px-4">
+            <form onSubmit={handleSubmit} className="flex gap-3">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Digite sua mensagem..."
+                  className="w-full bg-white rounded-full px-5 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none border-4 border-white focus:border-white/80"
+                  disabled={isLoading}
+                />
+              </div>
+              <Button
+                type="submit"
+                size="icon"
+                disabled={!input.trim() || isLoading}
+                className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-white border-4 border-white"
+              >
+                <Send className="h-5 w-5" />
+              </Button>
+            </form>
+          </div>
         </div>
       </main>
 
