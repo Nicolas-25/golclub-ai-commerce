@@ -3,7 +3,15 @@ import { NextResponse } from 'next/server'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy init to avoid build errors if env missing
+const getResendClient = () => {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+        console.warn('RESEND_API_KEY not configured, emails disabled')
+        return null
+    }
+    return new Resend(apiKey)
+}
 
 // Initialize MP (Lazy init inside handler to avoid build errors if env missing)
 const getPaymentClient = () => {
@@ -128,8 +136,9 @@ export async function POST(request: Request) {
             .eq('id', order.id)
 
         // 6. Send Email Notification
-        if (user.email) {
-            await resend.emails.send({
+        const resendClient = getResendClient()
+        if (user.email && resendClient) {
+            await resendClient.emails.send({
                 from: 'GolClub <noreply@golclub.com.br>', // Need verified domain
                 to: user.email,
                 subject: `Pedido #${order.id.slice(0, 8)} - ${dbStatus === 'confirmed' ? 'Pagamento Aprovado' : 'Aguardando Pagamento'}`,
@@ -140,7 +149,7 @@ export async function POST(request: Request) {
                     <p>Total: R$ ${amount.toFixed(2)}</p>
                     ${dbStatus === 'awaiting_payment' && paymentMethod === 'pix' ? '<p>Se ainda não pagou, use o código Pix gerado na tela.</p>' : ''}
                 `
-            }).catch(err => console.error('Email send failed:', err))
+            }).catch((err: Error) => console.error('Email send failed:', err))
         }
 
         // 5. Return success

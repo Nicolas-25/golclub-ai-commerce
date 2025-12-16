@@ -10,7 +10,7 @@ interface MessageBubbleProps {
     isLatest?: boolean
 }
 
-export function MessageBubble({ message, isLatest }: { message: Message | any, isLatest?: boolean }) {
+export function MessageBubble({ message, isLatest }: MessageBubbleProps) {
     const isUser = message.role === 'user'
     const isAssistant = message.role === 'assistant'
     const checkoutTool = message.toolInvocations?.find((t: any) => t.toolName === 'requestCheckout')

@@ -1,0 +1,42 @@
+﻿
+> golclub-ai-commerce@0.1.0 build
+> next build
+
+   Ôû▓ Next.js 16.0.10 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ Ô£ô Compiled successfully in 14.5s
+   Running TypeScript ...
+node.exe : Failed to compile.
+No linha:1 caractere:1
++ & "D:\Users\USER\NODE/node.exe" 
+"D:\Users\USER\NODE/node_modules/npm/ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~
+    + CategoryInfo          : NotSpecified: (Failed to compile.:St 
+   ring) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+./src/components/chat/MessageBubble.tsx:13:65
+Type error: Cannot find name 'Message'.
+
+[0m [90m 11 |[39m }
+ [90m 12 |[39m
+[31m[1m>[22m[39m[90m 13 |[39m [36mexport[39m 
+[36mfunction[39m [33mMessageBubble[39m({ message[33m,[39m 
+isLatest }[33m:[39m { message[33m:[39m [33mMessage[39m 
+[33m|[39m any[33m,[39m isLatest[33m?[39m[33m:[39m boolean 
+}) {
+ [90m    |[39m                                                   
+              [31m[1m^[22m[39m
+ [90m 14 |[39m     [36mconst[39m isUser [33m=[39m 
+message[33m.[39mrole [33m===[39m [32m'user'[39m
+ [90m 15 |[39m     [36mconst[39m isAssistant [33m=[39m 
+message[33m.[39mrole [33m===[39m [32m'assistant'[39m
+ [90m 16 |[39m     [36mconst[39m checkoutTool [33m=[39m messa
+ge[33m.[39mtoolInvocations[33m?[39m[33m.[39mfind((t[33m:[39
+m any) [33m=>[39m t[33m.[39mtoolName [33m===[39m 
+[32m'requestCheckout'[39m)[0m
+Next.js build worker exited with code: 1 and signal: null
