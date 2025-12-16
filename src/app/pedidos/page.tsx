@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import { Package, Truck, CheckCircle, Clock, XCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import Image from 'next/image'
+import { ChatSidebarWrapper } from './ChatSidebarWrapper'
 
 const statusMap: Record<string, { label: string, color: string, icon: any }> = {
     'pending': { label: 'Aguardando Pagamento', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
@@ -37,7 +38,13 @@ export default async function PedidosPage() {
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
             <Header user={user} />
 
-            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+            {/* Chat Sidebar */}
+            <ChatSidebarWrapper
+                userEmail={user.email || ''}
+                userName={user.user_metadata?.name}
+            />
+
+            <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 mr-16">
                 <div className="flex items-center gap-3 mb-8">
                     <Package className="h-8 w-8 text-primary" />
                     <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">Meus Pedidos</h1>

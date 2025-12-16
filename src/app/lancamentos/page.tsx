@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header'
 import { ProductCard } from '@/components/catalog/ProductCard'
 import { redirect } from 'next/navigation'
 import { Sparkles } from 'lucide-react'
+import { ChatSidebarWrapper } from './ChatSidebarWrapper'
 
 export default async function LancamentosPage() {
     const supabase = await createClient()
@@ -35,7 +36,13 @@ export default async function LancamentosPage() {
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
             <Header user={user} />
 
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+            {/* Chat Sidebar */}
+            <ChatSidebarWrapper
+                userEmail={user.email || ''}
+                userName={user.user_metadata?.name}
+            />
+
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 mr-16">
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -50,7 +57,7 @@ export default async function LancamentosPage() {
                 </div>
 
                 {products && products.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {products.map((product: any) => (
                             <ProductCard
                                 key={product.id}
