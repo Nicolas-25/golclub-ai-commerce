@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { User, LogIn, Menu, X } from 'lucide-react'
+import { User, LogIn, Menu, X, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -27,12 +27,12 @@ export function Header({ showAuthModal, user, onLogout }: HeaderProps) {
     const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
     return (
-        <header className="sticky top-0 z-50 bg-white border-b-4 border-primary">
+        <header className="sticky top-0 z-50 bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                <div className="flex items-center justify-between h-20">
+                <div className="flex items-center justify-between h-24">
                     {/* Logo */}
                     <Link href="/" className="flex items-center shrink-0">
-                        <div className="relative h-14 w-36">
+                        <div className="relative h-16 w-40">
                             <Image
                                 src="/logo-light.png"
                                 alt="GolClub"
@@ -51,10 +51,10 @@ export function Header({ showAuthModal, user, onLogout }: HeaderProps) {
                                     key={item.href}
                                     href={item.href}
                                     className={cn(
-                                        'px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all',
+                                        'px-5 py-2.5 rounded-full text-xs font-bold transition-all uppercase tracking-wide',
                                         pathname === item.href
-                                            ? 'bg-primary text-white border-primary'
-                                            : 'text-zinc-800 border-primary hover:bg-primary hover:text-white'
+                                            ? 'bg-primary text-white shadow-md'
+                                            : 'bg-primary text-white hover:bg-primary/90'
                                     )}
                                 >
                                     {item.label}
@@ -64,7 +64,7 @@ export function Header({ showAuthModal, user, onLogout }: HeaderProps) {
                     )}
 
                     {/* Auth Buttons / Profile */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-4">
                         {user ? (
                             <div className="relative">
                                 <button
@@ -123,16 +123,15 @@ export function Header({ showAuthModal, user, onLogout }: HeaderProps) {
                         ) : (
                             <>
                                 <Button
-                                    variant="outline"
                                     onClick={() => showAuthModal?.('login')}
-                                    className="border-2 border-primary text-primary hover:bg-primary hover:text-white font-bold"
+                                    className="bg-primary hover:bg-primary/90 text-white font-bold px-8 h-10 rounded-sm"
                                 >
                                     <LogIn className="h-4 w-4 mr-2" />
                                     LOGIN
                                 </Button>
                                 <Button
                                     onClick={() => showAuthModal?.('register')}
-                                    className="bg-primary hover:bg-primary/90 font-bold border-2 border-primary"
+                                    className="bg-primary hover:bg-primary/90 text-white font-bold px-8 h-10 rounded-sm"
                                 >
                                     <User className="h-4 w-4 mr-2" />
                                     CADASTRAR
@@ -161,10 +160,10 @@ export function Header({ showAuthModal, user, onLogout }: HeaderProps) {
                                     key={item.href}
                                     href={item.href}
                                     className={cn(
-                                        'px-4 py-3 rounded-lg font-bold border-2 transition-colors',
+                                        'px-4 py-3 rounded-lg font-bold transition-colors',
                                         pathname === item.href
-                                            ? 'bg-primary text-white border-primary'
-                                            : 'text-zinc-800 border-primary hover:bg-primary hover:text-white'
+                                            ? 'bg-primary text-white'
+                                            : 'text-primary bg-primary/10'
                                     )}
                                     onClick={() => setMobileMenuOpen(false)}
                                 >

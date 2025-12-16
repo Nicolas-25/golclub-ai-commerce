@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Header } from '@/components/layout/Header'
 import { AuthModal } from '@/components/auth/AuthModal'
+import { GuestHome } from '@/components/home/GuestHome'
 import { TypingIndicator } from '@/components/chat/TypingIndicator'
 import { cn } from '@/lib/utils'
 import { motion } from 'framer-motion'
@@ -24,13 +25,7 @@ interface User {
 }
 
 export default function Home() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      role: 'assistant',
-      content: 'Bem Vindo a Gol Club! Aqui você encontra as melhores camisas de futebol em qualidade e preço!\n\nCaso você já tenha uma conta basta fazer login para dar uma olhada no catálogo ou fazer novos pedidos.\n\nCaso seja sua primeira vez por aqui faça seu cadastro para seguirmos por aqui.'
-    }
-  ])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [authModalOpen, setAuthModalOpen] = useState(false)
@@ -55,7 +50,7 @@ export default function Home() {
           name: authUser.user_metadata?.name
         })
 
-        // Update welcome message for logged in user
+        // Initial message for logged in user
         setMessages([{
           id: '1',
           role: 'assistant',
@@ -151,6 +146,12 @@ export default function Home() {
   const handleAuthSuccess = (userData: User) => {
     setUser(userData)
     setAuthModalOpen(false)
+    // Initialize chat for newly logged in user
+    setMessages([{
+      id: '1',
+      role: 'assistant',
+      content: `Olá${userData.name ? `, ${userData.name}` : ''}! 👋 Seja bem-vindo de volta à **GolClub**!\n\nEm que posso te ajudar hoje?`
+    }])
   }
 
   const handleLogout = async () => {
@@ -164,7 +165,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col font-sans">
       {/* Header */}
       <Header
         showAuthModal={showAuthModal}
@@ -172,95 +173,96 @@ export default function Home() {
         onLogout={handleLogout}
       />
 
-      {/* Banner Area */}
-      <div className="bg-primary py-6">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-center text-white font-bold text-xl mb-2">BANNERS</h2>
-        </div>
-      </div>
-
-      {/* Main Chat Area - Purple background like mockup */}
-      <main className="flex-1 flex flex-col bg-primary">
-        {/* Chat Container */}
-        <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
-          <div className="bg-primary rounded-2xl border-4 border-white/20 p-4 h-full flex flex-col min-h-[400px]">
-            {/* Messages */}
-            <ScrollArea className="flex-1 pr-2" ref={scrollRef}>
-              <div className="space-y-4">
-                {messages.map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={cn(
-                      'flex gap-3',
-                      message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col">
+        {!user ? (
+          // Guest View - Static Landing Page
+          <GuestHome />
+        ) : (
+          // Logged In View - Functional Chat
+          <div className="flex-1 flex flex-col bg-primary">
+            {/* Chat Container */}
+            <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
+              <div className="bg-primary rounded-2xl border-4 border-white/20 p-4 h-full flex flex-col min-h-[400px]">
+                {/* Messages */}
+                <ScrollArea className="flex-1 pr-2" ref={scrollRef}>
+                  <div className="space-y-4">
+                    {messages.map((message) => (
+                      <motion.div
+                        key={message.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={cn(
+                          'flex gap-3',
+                          message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                        )}
+                      >
+                        {message.role === 'assistant' && (
+                          <Avatar className="h-10 w-10 shrink-0 border-2 border-white bg-white/20">
+                            <AvatarFallback className="bg-transparent text-white text-lg">
+                              👤
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                        {message.role === 'user' && (
+                          <Avatar className="h-10 w-10 shrink-0 border-2 border-white bg-white">
+                            <AvatarFallback className="bg-white text-primary text-lg">
+                              👤
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                        <div className={cn(
+                          'max-w-[85%] rounded-xl px-4 py-3 border-2',
+                          message.role === 'user'
+                            ? 'bg-white text-zinc-900 border-white'
+                            : 'bg-white text-zinc-900 border-white'
+                        )}>
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                    {isLoading && messages[messages.length - 1]?.content === '' && (
+                      <div className="flex gap-3">
+                        <Avatar className="h-10 w-10 border-2 border-white bg-white/20">
+                          <AvatarFallback className="bg-transparent text-white text-lg">👤</AvatarFallback>
+                        </Avatar>
+                        <div className="bg-white rounded-xl px-4 py-3 border-2 border-white">
+                          <TypingIndicator />
+                        </div>
+                      </div>
                     )}
-                  >
-                    {message.role === 'assistant' && (
-                      <Avatar className="h-10 w-10 shrink-0 border-2 border-white bg-white/20">
-                        <AvatarFallback className="bg-transparent text-white text-lg">
-                          👤
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    {message.role === 'user' && (
-                      <Avatar className="h-10 w-10 shrink-0 border-2 border-white bg-white">
-                        <AvatarFallback className="bg-white text-primary text-lg">
-                          👤
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    <div className={cn(
-                      'max-w-[85%] rounded-xl px-4 py-3 border-2',
-                      message.role === 'user'
-                        ? 'bg-white text-zinc-900 border-white'
-                        : 'bg-white text-zinc-900 border-white'
-                    )}>
-                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                    </div>
-                  </motion.div>
-                ))}
-                {isLoading && messages[messages.length - 1]?.content === '' && (
-                  <div className="flex gap-3">
-                    <Avatar className="h-10 w-10 border-2 border-white bg-white/20">
-                      <AvatarFallback className="bg-transparent text-white text-lg">👤</AvatarFallback>
-                    </Avatar>
-                    <div className="bg-white rounded-xl px-4 py-3 border-2 border-white">
-                      <TypingIndicator />
-                    </div>
                   </div>
-                )}
+                </ScrollArea>
               </div>
-            </ScrollArea>
-          </div>
-        </div>
+            </div>
 
-        {/* Input Area - Fixed at bottom */}
-        <div className="bg-primary py-4 border-t-4 border-white/20">
-          <div className="max-w-4xl mx-auto px-4">
-            <form onSubmit={handleSubmit} className="flex gap-3">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Digite sua mensagem..."
-                  className="w-full bg-white rounded-full px-5 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none border-4 border-white focus:border-white/80"
-                  disabled={isLoading}
-                />
+            {/* Input Area - Fixed at bottom */}
+            <div className="bg-primary py-4 border-t-4 border-white/20">
+              <div className="max-w-4xl mx-auto px-4">
+                <form onSubmit={handleSubmit} className="flex gap-3">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="Digite sua mensagem..."
+                      className="w-full bg-white rounded-full px-5 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none border-4 border-white focus:border-white/80"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    size="icon"
+                    disabled={!input.trim() || isLoading}
+                    className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-white border-4 border-white"
+                  >
+                    <Send className="h-5 w-5" />
+                  </Button>
+                </form>
               </div>
-              <Button
-                type="submit"
-                size="icon"
-                disabled={!input.trim() || isLoading}
-                className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-white border-4 border-white"
-              >
-                <Send className="h-5 w-5" />
-              </Button>
-            </form>
+            </div>
           </div>
-        </div>
+        )}
       </main>
 
       {/* Auth Modal */}
