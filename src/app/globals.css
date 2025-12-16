@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "tw-animate-css";
+/* @import "tw-animate-css"; */
 
 @custom-variant dark (&:is(.dark *));
 
@@ -93,10 +93,6 @@
   --chat-bubble-user: #7C3AED;
   --chat-bubble-assistant: #F4F4F5;
   --chat-input-bg: #F4F4F5;
-}
-
-.dark {
-  /* Already dark by default */
 }
 
 @layer base {
