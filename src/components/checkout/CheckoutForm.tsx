@@ -177,7 +177,7 @@ export function CheckoutForm({ amount, productName, userEmail = '' }: CheckoutFo
                                         </Button>
                                     </div>
                                     <p className="text-xs text-zinc-500">
-                                        Abra o app do seu banco e escolha "Pix Copia e Cola" ou escaneie o QR Code.
+                                        Abra o app do seu banco e escolha &quot;Pix Copia e Cola&quot; ou escaneie o QR Code.
                                     </p>
                                 </div>
                             )}
