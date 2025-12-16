@@ -174,92 +174,96 @@ export default function Home() {
       />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col items-center py-8 px-4">
         {!user ? (
           // Guest View - Static Landing Page
           <GuestHome />
         ) : (
-          // Logged In View - Functional Chat
-          <div className="flex-1 flex flex-col bg-primary">
-            {/* Chat Container */}
-            <div className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
-              <div className="bg-primary rounded-2xl border-4 border-white/20 p-4 h-full flex flex-col min-h-[400px]">
-                {/* Messages */}
-                <ScrollArea className="flex-1 pr-2" ref={scrollRef}>
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <motion.div
-                        key={message.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={cn(
-                          'flex gap-3',
-                          message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                        )}
-                      >
-                        {message.role === 'assistant' && (
-                          <Avatar className="h-10 w-10 shrink-0 border-2 border-white bg-white/20">
-                            <AvatarFallback className="bg-transparent text-white text-lg">
-                              👤
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        {message.role === 'user' && (
-                          <Avatar className="h-10 w-10 shrink-0 border-2 border-white bg-white">
-                            <AvatarFallback className="bg-white text-primary text-lg">
-                              👤
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        <div className={cn(
-                          'max-w-[85%] rounded-xl px-4 py-3 border-2',
-                          message.role === 'user'
-                            ? 'bg-white text-zinc-900 border-white'
-                            : 'bg-white text-zinc-900 border-white'
-                        )}>
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                    {isLoading && messages[messages.length - 1]?.content === '' && (
-                      <div className="flex gap-3">
-                        <Avatar className="h-10 w-10 border-2 border-white bg-white/20">
-                          <AvatarFallback className="bg-transparent text-white text-lg">👤</AvatarFallback>
-                        </Avatar>
-                        <div className="bg-white rounded-xl px-4 py-3 border-2 border-white">
-                          <TypingIndicator />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-              </div>
+          // Logged In View - Functional Chat in a Box
+          <div className="w-full max-w-4xl flex flex-col gap-6">
+
+            {/* Optional Banner for Logged Users too? 
+                The user said "banner placeholder" implies marketing triggers. 
+                Let's keep the banner placeholder consistent if needed, 
+                but for now let's focus on the chat box as requested.
+            */}
+
+            {/* Banner Placeholder (Optional - keeping consistent layout) */}
+            <div className="bg-primary rounded-xl h-24 flex items-center justify-center shadow-lg mb-2">
+              <h2 className="text-white text-2xl font-bold tracking-wide">BANNERS</h2>
             </div>
 
-            {/* Input Area - Fixed at bottom */}
-            <div className="bg-primary py-4 border-t-4 border-white/20">
-              <div className="max-w-4xl mx-auto px-4">
-                <form onSubmit={handleSubmit} className="flex gap-3">
-                  <div className="flex-1 relative">
-                    <input
-                      type="text"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      placeholder="Digite sua mensagem..."
-                      className="w-full bg-white rounded-full px-5 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none border-4 border-white focus:border-white/80"
-                      disabled={isLoading}
-                    />
-                  </div>
+            {/* Chat Box Container */}
+            <div className="bg-primary rounded-2xl shadow-xl flex flex-col h-[600px] overflow-hidden relative">
+
+              {/* Scrollable Messages Area */}
+              <ScrollArea className="flex-1 p-6" ref={scrollRef}>
+                <div className="space-y-6">
+                  {messages.map((message) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={cn(
+                        'flex gap-4',
+                        message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                      )}
+                    >
+                      {message.role === 'assistant' && (
+                        <div className="bg-transparent border-2 border-white rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0">
+                          <User className="text-white h-5 w-5" />
+                        </div>
+                      )}
+                      {message.role === 'user' && (
+                        <div className="bg-white rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0">
+                          <User className="text-primary h-5 w-5" />
+                        </div>
+                      )}
+                      <div className={cn(
+                        'max-w-[80%] rounded-2xl px-5 py-4 shadow-sm',
+                        message.role === 'user'
+                          ? 'bg-white text-zinc-900 rounded-tr-sm'
+                          : 'bg-white text-zinc-900 rounded-tl-sm'
+                      )}>
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed font-medium">{message.content}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                  {isLoading && messages[messages.length - 1]?.content === '' && (
+                    <div className="flex gap-4">
+                      <div className="bg-transparent border-2 border-white rounded-full p-2 h-10 w-10 flex items-center justify-center shrink-0">
+                        <User className="text-white h-5 w-5" />
+                      </div>
+                      <div className="bg-white rounded-2xl px-5 py-4 rounded-tl-sm shadow-sm">
+                        <TypingIndicator />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              {/* Input Area - Inside the Box */}
+              <div className="p-4 bg-primary border-t border-white/10">
+                <form onSubmit={handleSubmit} className="flex gap-3 relative">
+                  <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Digite sua mensagem..."
+                    className="w-full bg-white text-zinc-900 placeholder:text-zinc-400 rounded-full pl-6 pr-14 py-4 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-md transition-all"
+                    disabled={isLoading}
+                  />
                   <Button
                     type="submit"
                     size="icon"
                     disabled={!input.trim() || isLoading}
-                    className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 text-white border-4 border-white"
+                    className="absolute right-2 top-2 h-10 w-10 rounded-full bg-primary text-white hover:bg-primary/90"
                   >
-                    <Send className="h-5 w-5" />
+                    <Send className="h-4 w-4" />
                   </Button>
                 </form>
               </div>
+
             </div>
           </div>
         )}
