@@ -105,6 +105,19 @@ Responda de forma natural e amigável!`
                             status: 'ready_for_payment'
                         }
                     }
+                } as any),
+                showProduct: tool({
+                    description: 'Show a product card with details (image, price, etc) to the user.',
+                    parameters: z.object({
+                        title: z.string().describe('Product title'),
+                        subtitle: z.string().describe('Product subtitle or description'),
+                        image: z.string().describe('Product image URL'),
+                        priceChina: z.string().describe('Price for "Encomenda" (e.g. R$ 149,90)'),
+                        priceBr: z.string().describe('Price for "Brasil" (e.g. R$ 299,90)')
+                    }),
+                    execute: async (args: any) => {
+                        return { status: 'shown' }
+                    }
                 } as any)
             }
         })

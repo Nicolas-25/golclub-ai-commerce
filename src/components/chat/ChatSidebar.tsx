@@ -1,21 +1,16 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Send, User, Minimize2, Maximize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { TypingIndicator } from '@/components/chat/TypingIndicator'
 import { cn } from '@/lib/utils'
-import { motion, AnimatePresence } from 'framer-motion'
-import { createBrowserClient } from '@supabase/ssr'
+import { useChat } from '@ai-sdk/react'
 import ReactMarkdown from 'react-markdown'
+import { TypingIndicator } from './TypingIndicator'
 import { useChatContext } from '@/contexts/ChatContext'
-
-interface ChatMessage {
-    id: string
-    role: 'user' | 'assistant'
-    content: string
-}
+import { ProductCard } from './ProductCard'
 
 interface ChatSidebarProps {
     userEmail?: string
@@ -23,109 +18,53 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ userEmail, userName }: ChatSidebarProps) {
-    const [messages, setMessages] = useState<ChatMessage[]>([
-        {
-            id: '1',
-            role: 'assistant',
-            content: userName
-                ? `Olá, ${userName}! 👋 Vejo que está navegando pelo catálogo. Posso te ajudar a encontrar algo específico?`
-                : 'Olá! 👋 Posso te ajudar a encontrar a camisa perfeita?'
-        }
-    ])
-    const [input, setInput] = useState('')
-    const [isLoading, setIsLoading] = useState(false)
+    const { isExpanded, setIsExpanded, selectedProduct, clearSelectedProduct } = useChatContext()
     const scrollRef = useRef<HTMLDivElement>(null)
 
-    const { isExpanded, toggleExpanded, selectedProduct, clearSelectedProduct } = useChatContext()
+    const { messages, input, setInput, handleInputChange, handleSubmit, isLoading, append } = useChat({
+        api: '/api/chat',
+        initialMessages: [
+            {
+                id: 'welcome',
+                role: 'assistant',
+                content: `Olá${userName ? `, ${userName}` : ''}! Sou o assistente da GolClub. Como posso ajudar você a encontrar o manto sagrado hoje? ⚽`
+            }
+        ],
+        body: {
+            userInfo: {
+                name: userName,
+                email: userEmail
+            }
+        }
+    })
 
+    // Scroll to bottom on new messages
     useEffect(() => {
         if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-        }
-    }, [messages])
-
-    const sendMessage = useCallback(async (content: string) => {
-        if (!content.trim() || isLoading) return
-
-        const userMessage: ChatMessage = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: content.trim(),
-        }
-
-        setMessages(prev => [...prev, userMessage])
-        setInput('')
-        setIsLoading(true)
-
-        const assistantId = (Date.now() + 1).toString()
-        setMessages(prev => [...prev, { id: assistantId, role: 'assistant', content: '' }])
-
-        try {
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: [...messages, userMessage].map(m => ({
-                        role: m.role,
-                        content: m.content,
-                    })),
-                    userInfo: {
-                        name: userName,
-                        email: userEmail,
-                    },
-                }),
-            })
-
-            if (!response.ok) throw new Error('Failed')
-
-            const reader = response.body?.getReader()
-            if (!reader) throw new Error('No reader')
-
-            const decoder = new TextDecoder()
-            let assistantContent = ''
-
-            while (true) {
-                const { done, value } = await reader.read()
-                if (done) break
-
-                const chunk = decoder.decode(value, { stream: true })
-                assistantContent += chunk
-
-                setMessages(prev =>
-                    prev.map(m =>
-                        m.id === assistantId
-                            ? { ...m, content: assistantContent }
-                            : m
-                    )
-                )
+            const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]')
+            if (scrollContainer) {
+                scrollContainer.scrollTop = scrollContainer.scrollHeight
             }
-        } catch (error) {
-            console.error('Error:', error)
-            setMessages(prev =>
-                prev.map(m =>
-                    m.id === assistantId
-                        ? { ...m, content: 'Desculpe, tive um problema. Pode repetir?' }
-                        : m
-                )
-            )
-        } finally {
-            setIsLoading(false)
         }
-    }, [messages, isLoading, userName, userEmail])
+    }, [messages, isLoading])
 
-    // Handle product selected from catalog
+    // Toggle expand
+    const toggleExpanded = () => setIsExpanded(!isExpanded)
+
+    // Handle product selection from catalog
     useEffect(() => {
         if (selectedProduct) {
-            const productMessage = `Quero saber mais sobre a camisa ${selectedProduct.name} do ${selectedProduct.team}!`
-            sendMessage(productMessage)
-            clearSelectedProduct()
-        }
-    }, [selectedProduct, clearSelectedProduct, sendMessage])
+            if (!isExpanded) setIsExpanded(true);
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-        sendMessage(input)
-    }
+            // Send message to AI about the selected product
+            append({
+                role: 'user',
+                content: `Gostei da camisa ${selectedProduct.name}. Pode me dar mais detalhes sobre ela?`
+            });
+
+            clearSelectedProduct();
+        }
+    }, [selectedProduct, isExpanded, setIsExpanded, append, clearSelectedProduct]);
 
     return (
         <AnimatePresence>
@@ -133,12 +72,12 @@ export function ChatSidebar({ userEmail, userName }: ChatSidebarProps) {
                 initial={{ width: isExpanded ? 380 : 56 }}
                 animate={{ width: isExpanded ? 380 : 56 }}
                 transition={{ duration: 0.3 }}
-                className="fixed right-4 top-20 bottom-4 bg-primary rounded-2xl shadow-2xl z-40 flex flex-col overflow-hidden"
+                className="fixed right-4 top-20 bottom-4 bg-slate-50 dark:bg-zinc-950 rounded-2xl shadow-2xl z-40 flex flex-col overflow-hidden border border-zinc-200 dark:border-zinc-800"
             >
                 {/* Toggle Button */}
                 <button
                     onClick={toggleExpanded}
-                    className="absolute top-4 left-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors z-50"
+                    className="absolute top-4 left-4 p-2 rounded-full bg-[#6A00A0] hover:bg-[#580085] transition-colors z-50 shadow-md"
                 >
                     {isExpanded ? (
                         <Minimize2 className="h-4 w-4 text-white" />
@@ -150,14 +89,14 @@ export function ChatSidebar({ userEmail, userName }: ChatSidebarProps) {
                 {isExpanded && (
                     <>
                         {/* Header */}
-                        <div className="p-4 pt-14 border-b border-white/10">
-                            <h3 className="text-white font-bold text-lg">Chat GolClub</h3>
-                            <p className="text-white/70 text-sm">Assistente de vendas</p>
+                        <div className="p-4 pt-14 border-b border-zinc-200 dark:border-zinc-800 bg-white/50 backdrop-blur-sm dark:bg-zinc-900/50">
+                            <h3 className="text-zinc-900 dark:text-white font-bold text-lg">Chat GolClub</h3>
+                            <p className="text-zinc-500 dark:text-zinc-400 text-sm">Assistente de vendas</p>
                         </div>
 
                         {/* Messages */}
                         <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-                            <div className="space-y-4">
+                            <div className="space-y-4 pb-4">
                                 {messages.map((message) => (
                                     <motion.div
                                         key={message.id}
@@ -169,33 +108,60 @@ export function ChatSidebar({ userEmail, userName }: ChatSidebarProps) {
                                         )}
                                     >
                                         {message.role === 'assistant' && (
-                                            <div className="bg-white/20 rounded-full p-1.5 h-8 w-8 flex items-center justify-center shrink-0">
-                                                <User className="text-white h-4 w-4" />
+                                            <div className="bg-[#6A00A0] rounded-full p-1.5 h-8 w-8 flex items-center justify-center shrink-0 shadow-sm text-white self-start mt-1">
+                                                <User className="h-4 w-4" />
                                             </div>
                                         )}
-                                        <div className={cn(
-                                            'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm prose prose-sm max-w-none',
-                                            message.role === 'user'
-                                                ? 'bg-white text-zinc-900 rounded-tr-sm'
-                                                : 'bg-white/10 text-white rounded-tl-sm'
-                                        )}>
-                                            <ReactMarkdown
-                                                components={{
-                                                    p: ({ children }) => <p className="m-0 whitespace-pre-wrap">{children}</p>,
-                                                    strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-                                                }}
-                                            >
-                                                {message.content}
-                                            </ReactMarkdown>
+
+                                        <div className="flex flex-col gap-2 max-w-[85%]">
+                                            {/* Text Content */}
+                                            {message.content && (
+                                                <div className={cn(
+                                                    'rounded-2xl px-4 py-2.5 text-sm prose prose-sm max-w-none',
+                                                    message.role === 'user'
+                                                        ? 'bg-[#6A00A0] text-white rounded-tr-sm shadow-md'
+                                                        : 'bg-white text-zinc-900 border border-purple-100 dark:border-zinc-800 shadow-sm rounded-tl-sm'
+                                                )}>
+                                                    <ReactMarkdown
+                                                        components={{
+                                                            p: ({ children }) => <p className="m-0 whitespace-pre-wrap">{children}</p>,
+                                                            strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                                        }}
+                                                    >
+                                                        {message.content}
+                                                    </ReactMarkdown>
+                                                </div>
+                                            )}
+
+                                            {/* Tool Invocations (Product Card / Checkout) */}
+                                            {message.toolInvocations?.map((toolInvocation) => {
+                                                if (toolInvocation.toolName === 'showProduct') {
+                                                    const { title, subtitle, image, priceChina, priceBr } = toolInvocation.args;
+
+                                                    return (
+                                                        <div key={toolInvocation.toolCallId} className="mt-2">
+                                                            <ProductCard
+                                                                title={title}
+                                                                subtitle={subtitle}
+                                                                image={image}
+                                                                priceChina={priceChina}
+                                                                priceBr={priceBr}
+                                                                onViewDetails={() => console.log('View details', title)}
+                                                            />
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
                                         </div>
                                     </motion.div>
                                 ))}
-                                {isLoading && messages[messages.length - 1]?.content === '' && (
+                                {isLoading && messages[messages.length - 1]?.role === 'user' && (
                                     <div className="flex gap-3">
-                                        <div className="bg-white/20 rounded-full p-1.5 h-8 w-8 flex items-center justify-center">
-                                            <User className="text-white h-4 w-4" />
+                                        <div className="bg-[#6A00A0] rounded-full p-1.5 h-8 w-8 flex items-center justify-center shrink-0 text-white self-start mt-1">
+                                            <User className="h-4 w-4" />
                                         </div>
-                                        <div className="bg-white/10 rounded-2xl px-4 py-2.5 rounded-tl-sm">
+                                        <div className="bg-white border border-purple-100 dark:border-zinc-800 rounded-2xl px-4 py-2.5 rounded-tl-sm shadow-sm">
                                             <TypingIndicator />
                                         </div>
                                     </div>
@@ -204,21 +170,21 @@ export function ChatSidebar({ userEmail, userName }: ChatSidebarProps) {
                         </ScrollArea>
 
                         {/* Input */}
-                        <div className="p-4 border-t border-white/10">
+                        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
                             <form onSubmit={handleSubmit} className="flex gap-2">
                                 <input
                                     type="text"
                                     value={input}
-                                    onChange={(e) => setInput(e.target.value)}
+                                    onChange={handleInputChange}
                                     placeholder="Digite sua mensagem..."
-                                    className="flex-1 bg-white/10 text-white placeholder:text-white/50 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                                    className="flex-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white placeholder:text-zinc-500 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#6A00A0]/20 border border-transparent focus:border-[#6A00A0]"
                                     disabled={isLoading}
                                 />
                                 <Button
                                     type="submit"
                                     size="icon"
                                     disabled={!input.trim() || isLoading}
-                                    className="h-10 w-10 rounded-full bg-white text-primary hover:bg-white/90"
+                                    className="h-10 w-10 rounded-full bg-[#6A00A0] text-white hover:bg-[#580085] shadow-md"
                                 >
                                     <Send className="h-4 w-4" />
                                 </Button>
@@ -229,8 +195,8 @@ export function ChatSidebar({ userEmail, userName }: ChatSidebarProps) {
 
                 {/* Collapsed state - just icon */}
                 {!isExpanded && (
-                    <div className="flex-1 flex items-center justify-center">
-                        <div className="bg-white/20 rounded-full p-3">
+                    <div className="flex-1 flex items-center justify-center cursor-pointer hover:bg-black/5 transition-colors" onClick={toggleExpanded}>
+                        <div className="bg-[#6A00A0] rounded-full p-3 shadow-md">
                             <User className="text-white h-6 w-6" />
                         </div>
                     </div>

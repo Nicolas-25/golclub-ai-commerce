@@ -27,7 +27,7 @@ export function Header({ showAuthModal, user, onLogout }: HeaderProps) {
     const [profileMenuOpen, setProfileMenuOpen] = useState(false)
 
     return (
-        <header className="sticky top-0 z-50 bg-white">
+        <header className="sticky top-0 z-50 bg-[#6A00A0] shadow-md border-b border-white/10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
                 <div className="flex items-center justify-between h-24">
                     {/* Logo */}
@@ -53,8 +53,8 @@ export function Header({ showAuthModal, user, onLogout }: HeaderProps) {
                                     className={cn(
                                         'px-5 py-2.5 rounded-full text-xs font-bold transition-all uppercase tracking-wide',
                                         pathname === item.href
-                                            ? 'bg-primary text-white shadow-md'
-                                            : 'bg-primary text-white hover:bg-primary/90'
+                                            ? 'bg-white text-[#6A00A0] shadow-md'
+                                            : 'text-white hover:bg-white/10'
                                     )}
                                 >
                                     {item.label}
